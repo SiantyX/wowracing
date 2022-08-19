@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  wowracing:
+    image: siantyx/sx:wowracing
+    container_name: wowracing
+    depends_on:
+      - "postgres"
+    environment:
+      - HTTP_PORT=3001
+      - PG_USER=wowracing
+      - PG_DB=wowracing
+      - PG_PW=NULL
+      - PG_HOST=postgres
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    networks:
+      - wowracing
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    networks:
+      wowracing:
+        aliases:
+          - "postgres"
+          - "pg"
+          - "pg1"
+    volumes:
+      - "pgdata:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_USER=wowracing
+      - POSTGRES_PASSWORD=NULL
+      - POSTGRES_DB=wowracing
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  wowracing:
+    name: wowracing
+    driver: bridge
