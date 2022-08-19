@@ -4,13 +4,15 @@ services:
   wowracing:
     image: siantyx/sx:wowracing
     container_name: wowracing
+    ports:
+      - 3001:3001
     depends_on:
       - "postgres"
     environment:
       - HTTP_PORT=3001
       - PG_USER=wowracing
       - PG_DB=wowracing
-      - PG_PW=NULL
+      - PG_PW=test123
       - PG_HOST=postgres
     logging:
       driver: "json-file"
@@ -34,7 +36,7 @@ services:
       - "pgdata:/var/lib/postgresql/data"
     environment:
       - POSTGRES_USER=wowracing
-      - POSTGRES_PASSWORD=NULL
+      - POSTGRES_PASSWORD=test123
       - POSTGRES_DB=wowracing
     restart: unless-stopped
 

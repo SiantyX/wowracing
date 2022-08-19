@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "docker build -t siantyx/sx:wowracing . && docker push siantyx/sx:wowracing",
+    "test": "docker build -t siantyx/sx:wowracing . && docker-compose up"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.1",
     "moment": "^2.29.4",
+    "pg": "^8.7.3",
     "sanitize": "^2.1.0"
   }
 }
