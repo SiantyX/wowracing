@@ -371,7 +371,7 @@ app.get("/:id", async (req, res) => {
       maxXP: xpPerLvl[player.latest.lvl][0],
       xpPerHour: xpPerHour,
       latestUpdated: moment.unix(player.latest.datetime).format("YYYY-MM-DD HH:mm:ss"),
-      team: player.team,
+      team: team,
       totalXP: xpPerLvl[player.latest.lvl][1] + player.latest.xp,
       history: player.history.map(post => {
         return { xp: post.xp, lvl: post.lvl, datetime: post.datetime, totalXP: xpPerLvl[post.lvl][1] + post.xp }
@@ -447,6 +447,46 @@ app.post("/xp", async (req, res) => {
 
   res.sendStatus(200);
 });
+
+function adminLock(req, res, next) {
+  //if (req.session.user) return next();
+  res.sendStatus(401);
+}
+// ADMIN LOCKED
+// update team, maybe other info in the future
+app.post("/:id", adminLock, async (req, res) => {
+  const id = sanitize(req.params.id);
+  const team = sanitize(req.body.team);
+  const row = await db.getPlayer(id);
+  if (!row) {
+    console.log("player not found")
+    console.log(id);
+    return res.sendStatus(400);
+  }
+
+  const playerName = row.id;
+  const player = row.info;
+
+  db.writePlayer(playerName, team, player);
+  res.sendStatus(200);
+});
+
+app.delete("/:id", adminLock, async (req, res) => {
+  const id = sanitize(req.params.id);
+  await db.deletePlayer(id);
+  res.sendStatus(200);
+});
+
+/*
+
+post /register - register new player
+get / - get all players
+get /:id - get a player
+get /team/:id - get a team and all players in team
+post /:id - update team 
+post /xp - xp update on player
+
+*/
 
 // start server
 app.listen(process.env.HTTP_PORT, () => {
