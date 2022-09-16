@@ -41,9 +41,13 @@ db["getPlayer"] = async function (playerName) {
   }
 };
 
+db["deletePlayer"] = async function (playerName) {
+  await pool.query("DELETE FROM leaderboard WHERE id = $1", [playerName]);
+};
+
 //const db = JSON.parse(fs.readFileSync(join(__dirname, "db.json")).toString());
 db["writePlayer"] = function (player, team, info) {
-  return pool.query("INSERT INTO leaderboard (id, team, info) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET info = $3", [player, team, info]);
+  return pool.query("INSERT INTO leaderboard (id, team, info) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET team = $2, info = $3", [player, team, info]);
 };
 
 module.exports = { db };
