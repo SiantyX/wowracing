@@ -219,6 +219,11 @@ app.get("/", async (req, res) => {
 
     // return player
     if (isEmptyObject(player.latest)) {
+      // init teamleaderboard
+      if (!(team in teamGrouping)) {
+        teamGrouping[team] = {xp: 0, numPlayers: 0, xpPerHour: 0, latestUpdated: 0};
+      }
+
       return {
         name: playerName,
         lvl: 0,
@@ -231,12 +236,12 @@ app.get("/", async (req, res) => {
       }
     } else {
       const xpPerHour = calcXPH(player);
-
+      
       // init teamleaderboard
       if (!(team in teamGrouping)) {
         teamGrouping[team] = {xp: 0, numPlayers: 0, xpPerHour: 0, latestUpdated: 0};
       }
-
+  
       teamGrouping[team].xp += xpPerLvl[player.latest.lvl][1] + player.latest.xp;
       teamGrouping[team].numPlayers += 1;
       teamGrouping[team].xpPerHour += xpPerHour;
@@ -450,7 +455,7 @@ app.post("/xp", async (req, res) => {
   const row = await db.getPlayer(name);
   if (!row) {
     console.log("player not found")
-    console.log(playerName);
+    console.log(name);
     return res.sendStatus(400);
   }
 
