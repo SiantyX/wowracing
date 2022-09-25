@@ -166,23 +166,41 @@ function calcXPH(player) {
 // register player for racing
 app.post("/register", async (req, res) => {
   const playerName = sanitize(req.body.name);
-  const team = sanitize(req.body.team);
+  let team = sanitize(req.body.team);
+  const key = sanitize(req.body.key);
+  const del = req.body.del;
+
+  console.log(`Inc regsiter '${playerName}' '${team}' '${key}' '${del}'`);
+
+  if (key != "881045") {
+    console.log("unauthorized register")
+    return res.status(400).send("unauthorized register");
+  }
+
   if (!team) {
     team = "";
   }
   
   if (!playerName) {
     console.log("no name submitted")
-    return res.sendStatus(400);
+    return res.status(400).send("no name submitted");
   }
 
-  const player = await db.getPlayer(playerName);
-  if (player) {
-    console.log("player already registered")
-    return res.sendStatus(400);
+  const row = await db.getPlayer(playerName);
+  if (del) {
+    if (row) {
+      db.deletePlayer(row.id, team, row.info);
+    }
+  } else {
+    if (row) {
+      console.log("player already registered, applying team")
+      //return res.status(400).send("player already registered");
+      db.writePlayer(row.id, team, row.info);
+    } else {
+      db.writePlayer(playerName, team, {latest: {}, history: []});
+    }
   }
 
-  db.writePlayer(playerName, team, {latest: {}, history: []});
   res.sendStatus(200);
 });
 
@@ -191,6 +209,8 @@ app.get("/", async (req, res) => {
   const allPlayers = await db.getLeaderboard();
 
   const teamGrouping = {};
+
+  const minuteAgo = moment().add(-1, "minute");
 
   const leaderboard = allPlayers.map(row => {
     const playerName = row.id;
@@ -231,6 +251,7 @@ app.get("/", async (req, res) => {
         maxXP: xpPerLvl[player.latest.lvl][0],
         xpPerHour: xpPerHour,
         latestUpdated: moment.unix(player.latest.datetime).format("YYYY-MM-DD HH:mm:ss"),
+        live: moment.unix(player.latest.datetime) > minuteAgo,
         team: team,
         totalXP: xpPerLvl[player.latest.lvl][1] + player.latest.xp
       }
@@ -259,6 +280,7 @@ app.get("/", async (req, res) => {
       maxXP: xpPerLvl[lvl][0],
       xpPerHour: xpPerHour,
       latestUpdated: moment.unix(teamGrouping[team].latestUpdated).format("YYYY-MM-DD HH:mm:ss"),
+      live: moment.unix(teamGrouping[team].latestUpdated) > minuteAgo,
       totalXP: avgTotalXP
     }
 
@@ -273,6 +295,8 @@ app.get("/team/:id", async (req, res) => {
   const id = sanitize(req.params.id);
   const allPlayers = await db.getTeamLeaderboard(id);
   let latestUpdated = 0;
+
+  const minuteAgo = moment().add(-1, "minute");
 
   const leaderboard = allPlayers.map(row => {
     const playerName = row.id;
@@ -304,6 +328,7 @@ app.get("/team/:id", async (req, res) => {
         maxXP: xpPerLvl[player.latest.lvl][0],
         xpPerHour: xpPerHour,
         latestUpdated: moment.unix(player.latest.datetime).format("YYYY-MM-DD HH:mm:ss"),
+        live: moment.unix(player.latest.datetime) > minuteAgo,
         team: team,
         totalXP: xpPerLvl[player.latest.lvl][1] + player.latest.xp
       }
@@ -332,7 +357,7 @@ app.get("/team/:id", async (req, res) => {
 
   const dstr = moment.unix(latestUpdated).format("YYYY-MM-DD HH:mm:ss");
 
-  res.send({team: id,  latestUpdated: dstr, avgTotalXP, xp, lvl, xpPerHour, totalXP, leaderboard});
+  res.send({team: id, maxXP: xpPerLvl[lvl][0], latestUpdated: dstr, live: moment.unix(latestUpdated) > minuteAgo, avgTotalXP, xp, lvl, xpPerHour, totalXP, leaderboard});
 });
 
 // Get a player
@@ -348,6 +373,8 @@ app.get("/:id", async (req, res) => {
   const playerName = row.id;
   const team = row.team;
   const player = row.info;
+
+  const minuteAgo = moment().add(-1, "minute");
 
   if (isEmptyObject(player.latest)) {
     return res.send({
@@ -371,6 +398,7 @@ app.get("/:id", async (req, res) => {
       maxXP: xpPerLvl[player.latest.lvl][0],
       xpPerHour: xpPerHour,
       latestUpdated: moment.unix(player.latest.datetime).format("YYYY-MM-DD HH:mm:ss"),
+      live: moment.unix(player.latest.datetime) > minuteAgo,
       team: team,
       totalXP: xpPerLvl[player.latest.lvl][1] + player.latest.xp,
       history: player.history.map(post => {
@@ -383,6 +411,11 @@ app.get("/:id", async (req, res) => {
 // Submit xp as player
 app.post("/xp", async (req, res) => {
   const data = sanitize(req.body.data);
+  if (!data) {
+    console.log("empty data");
+    return res.sendStatus(400);
+  }
+  console.log(`Got xp update string ${data}`);
   const m = data.match(r);
   if (!m) {
     console.log("regex no match");
@@ -448,6 +481,7 @@ app.post("/xp", async (req, res) => {
   res.sendStatus(200);
 });
 
+/*
 function adminLock(req, res, next) {
   //if (req.session.user) return next();
   res.sendStatus(401);
@@ -476,7 +510,7 @@ app.delete("/:id", adminLock, async (req, res) => {
   await db.deletePlayer(id);
   res.sendStatus(200);
 });
-
+*/
 /*
 
 post /register - register new player

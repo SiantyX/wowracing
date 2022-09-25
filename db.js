@@ -15,7 +15,7 @@ const db = {};
 
 db["getLeaderboard"] = async function () {
   const { rows } = await pool.query("SELECT * FROM leaderboard", []);
-  console.log(rows);
+  //console.log(JSON.stringify(rows));
   if (!rows) {
     return [];
   }
@@ -24,7 +24,7 @@ db["getLeaderboard"] = async function () {
 
 db["getTeamLeaderboard"] = async function (team) {
   const { rows } = await pool.query("SELECT * FROM leaderboard WHERE team = $1", [team]);
-  console.log(rows);
+  //console.log(JSON.stringify(rows));
   if (!rows) {
     return [];
   }
@@ -33,7 +33,7 @@ db["getTeamLeaderboard"] = async function (team) {
 
 db["getPlayer"] = async function (playerName) {
   const { rows } = await pool.query("SELECT * FROM leaderboard WHERE id = $1", [playerName]);
-  console.log(rows);
+  //console.log(JSON.stringify(rows));
   if (rows.length > 0) {
     return rows[0];
   } else {
