@@ -522,6 +522,24 @@ post /xp - xp update on player
 
 */
 
+app.use((req, res, next) => {
+  next({
+    status: 404,
+    message: 'Not Found',
+  });
+})
+
+app.use((err, req, res, next) => {
+  console.log(`${req.protocol}://${req.get('host')}${req.originalUrl}`)
+  if (err.message) console.error(err.message);
+  if (err.stack) console.error(err.stack);
+  if (err.status) { 
+    console.error(err.status);
+    return res.sendStatus(err.status);
+  }
+  res.sendStatus(500);
+})
+
 // start server
 app.listen(process.env.HTTP_PORT, () => {
   console.log(`wowracing api listening on port ${process.env.HTTP_PORT}`)
